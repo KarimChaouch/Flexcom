@@ -7,7 +7,7 @@ public class ADDZEROS {
 
 	public static void main(String[] args) throws IOException {
 		// TODO Auto-generated method stub
-
+		//test
 		String pathToCsv = "C:\\Users\\karim.chaouch\\Desktop\\directory_formatted.csv";
 		String row;
 		FileWriter myWriter = new FileWriter("C:\\Users\\karim.chaouch\\Desktop\\data2.txt");

@@ -1,0 +1,153 @@
+package flexcom.checkMailPackage;
+
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
+import javax.mail.Folder;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.NoSuchProviderException;
+import javax.mail.Session;
+import javax.mail.Store;
+
+public class CheckMails {
+
+	public void check(String host, String storeType, String user, String password) throws IOException {
+		String context = "C:\\Users\\karim.chaouch\\eclipse-workspace\\CheckMail\\resources\\context.properties";
+
+		FileReader params = new FileReader(context);
+
+		Properties parameters = new Properties();
+		parameters.load(params);
+		String file = parameters.getProperty("fileToSend");
+
+		// CSV file to send
+
+		FileWriter csvWriter = new FileWriter(file);
+		csvWriter.append("Email");
+		csvWriter.append(";");
+		csvWriter.append("Reception");
+		csvWriter.append(";");
+		csvWriter.append("Subject");
+		csvWriter.append(";");
+		csvWriter.append("Time Limit");
+		csvWriter.append("\n");
+
+		try {
+
+			// create properties field
+			Properties properties = new Properties();
+
+			properties.put("mail.pop3.host", host);
+			properties.put("mail.pop3.port", "993");
+			properties.put("mail.pop3.starttls.enable", "true");
+			Session emailSession = Session.getDefaultInstance(properties);
+
+			// create the POP3 store object and connect with the pop server
+			Store store = emailSession.getStore("pop3s");
+
+			store.connect(host, user, password);
+
+			// create the folder object and open it
+			Folder emailFolder = store.getFolder("INBOX");
+			emailFolder.open(Folder.READ_ONLY);
+
+			// retrieve the messages from the folder in an array and print it
+			Message[] messages = emailFolder.getMessages();
+			System.out.println("messages.length---" + messages.length);
+
+			// Get Date - 1 list of messages
+			Calendar calendar = Calendar.getInstance();
+
+			calendar.add(Calendar.DATE, -1);
+			Date date = new Date(calendar.getTimeInMillis());
+
+			// Set of emails not received
+
+			// Set of emails to track
+			Map<String, String[]> emailsSet = new HashMap<String, String[]>();
+			emailsSet.put("no.reply@dexia.com", new String[] { "Not received", "" });
+			emailsSet.put("calltax_reporting@noreply.net", new String[] { "Not received", "" });
+			emailsSet.put("noreply@flexcom.lu", new String[] { "Not received", "" });
+			emailsSet.put("noreply@hug.ch", new String[] { "Not received", "" });
+			emailsSet.put("phonemaster@unifr.ch", new String[] { "Not received", "" });
+			emailsSet.put("flexcom-calltax-noreply@ebu.ch", new String[] { "Not received", "" });
+			emailsSet.put("calltax@fr.ch", new String[] { "Not received", "" });
+			emailsSet.put("calltax.dsic@ville-ge.ch", new String[] { "Not received", "" });
+			emailsSet.put("telecom@admin.vs.ch", new String[] { "Not received", "" });
+			emailsSet.put("rapportcalltax@centrepatronal.ch", new String[] { "Not received", "" });
+			emailsSet.put("CalltaxReports@jura.ch", new String[] { "Not received", "" });
+			emailsSet.put("expert-monitor@post.lu", new String[] { "Not received", "" });
+			emailsSet.put("CallTaxLuxair@luxair.lu", new String[] { "Not received", "" });
+			emailsSet.put("digital.sender@wto.org", new String[] { "Not received", "" });
+			emailsSet.put("rapport_telephonie@vd.ch", new String[] { "Not received", "" });
+			emailsSet.put("calltax_Alerts@chem.lu", new String[] { "Not received", "" });
+			emailsSet.put("uat-expert-monitor@post.lu", new String[] { "Not received", "" });
+
+			// Email for testing
+			emailsSet.put("karim.chaouch@flexcomlabs.com", new String[] { "Not received", "" });
+
+			// Check emails and Append Csv file
+			for (int i = 0, n = messages.length; i < n; i++) {
+				Message message = messages[i];
+				if (message.getSentDate().after(date)) {
+					String sender = message.getFrom()[0].toString();
+					if (sender.contains("<") && sender.contains("<")) {
+
+						sender = sender.substring(sender.indexOf("<") + 1);
+						sender = sender.substring(0, sender.indexOf(">"));
+					}
+					System.out.println(sender);
+					if (emailsSet.containsKey(sender)) {
+
+						emailsSet.put(sender, new String[] { "received", message.getSubject().toString() });
+					}
+//					System.out.println("---------------------------------");
+//					System.out.println("Email Number " + (i + 1));
+//					System.out.println("Subject: " + message.getSubject());
+//					System.out.println("From: " + message.getFrom()[0]);
+//					System.out.println("Text: " + message.getContent().toString());
+
+				}
+
+			}
+
+			// Append CSV with information
+			for (Map.Entry<String, String[]> entry : emailsSet.entrySet()) {
+				csvWriter.append(entry.getKey());
+				csvWriter.append(";");
+				csvWriter.append(entry.getValue()[0]);
+				csvWriter.append(";");
+				csvWriter.append(entry.getValue()[1]);
+				csvWriter.append(";");
+				csvWriter.append("");
+				csvWriter.append("\n");
+			}
+
+			csvWriter.close();
+
+			SendMail sendMail = new SendMail();
+			sendMail.send();
+
+			// close the store and folder objects
+			emailFolder.close(false);
+			store.close();
+
+		} catch (NoSuchProviderException e) {
+			e.printStackTrace();
+		} catch (MessagingException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+}
